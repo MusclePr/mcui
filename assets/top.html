@@ -1,0 +1,170 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="css/style.css">
+<title>Minecraft 管理ページ (${user})</title>
+<script>
+var g_interval = 0;
+var g_busy = false;
+var g_nextRequest = "";
+var g_timeout = 0;
+var g_functionResponse = null
+
+function logout()
+{
+    requestStart('logout');
+}
+
+function enables(flag)
+{
+    let e = document.getElementById('restart1');
+    if (e && e.disabled == flag) {
+        e.disabled = !flag;
+    }
+    e = document.getElementById('restart2');
+    if (e && e.disabled == flag) {
+        e.disabled = !flag;
+    }
+}
+
+function onLoadResponse()
+{
+    if (g_timeout) {
+        clearTimeout(g_timeout);
+        g_timeout = 0;
+    }
+
+    //console.log(this.responseText);
+    if (g_functionResponse != null) {
+        g_functionResponse(this);
+        g_functionResponse = null;
+    }
+    //let res = JSON.parse(this.responseText);
+    if (this.responseText.match(/(yc2mc|xbox)/)) {
+        console.log("OK");
+    }
+    enables(true);
+    g_busy = false;
+    if (this.status == 401 || this.responseText.match(/yc2mc/)) {
+        // logout to reload
+        document.location.reload();
+    }
+}
+
+function onTimeout()
+{
+    if (g_timeout) {
+        clearTimeout(g_timeout);
+        g_timeout = 0;
+    }
+    enables(true);
+    g_busy = false;
+}
+
+function requestStart(uri, funcResponse)
+{
+    if (g_busy) return false;
+    g_busy = true;
+
+    enables(false); 
+    g_functionResponse = funcResponse && funcResponse instanceof Function ? funcResponse : null;
+    //console.log(uri);
+    try {
+        let req = new XMLHttpRequest();
+        //req.addEventListener("progress", onProgressResponse);
+        req.addEventListener("load", onLoadResponse);
+        req.open("GET", uri);
+        req.send();
+        g_timeout = setTimeout(onTimeout, 6000);
+    } catch (e) {
+        console.log(e);
+        onTimeout();
+        return false;
+    }
+    return true;
+}
+
+</script>
+</head>
+<body>
+<table style="border-width: 0">
+    <tr>
+        <th style="border-width: 0; padding: 0; font-size: x-large;">
+            Minecraft 管理ページ
+        </th>
+        <td style="border-width: 0; text-align: right; padding-left: 32px; font-size: x-small;">
+            (login:${user} / <span class="link" onClick="logout()">logout</span>)
+            <a href="https://a-b-c-d.com/mcui" target="_help">Help</a>
+        </td>
+    </tr>
+</table>
+<hr/>
+<div style="padding:8pt">
+<fieldset>
+    <legend>サーバー管理サービス</legend>
+    <a href="status">ステータス</a> … サーバーの状況を表示します<br/>
+    <!--
+    <a href="status" target="newTab">ホワイトリストの状態確認</a> … ホワイトリストの状態を確認します<br/>
+    <a href="whitelist/on" target="newTab">ホワイトリストON</a> … ホワイトリストに登録済みの人しかワールドに入れないモード（配信外）<br/>
+    <a href="whitelist/off" target="newTab">ホワイトリストOFF</a> … 誰でもワールドに入れるモード（配信中）<br/>
+    -->
+</fieldset>
+</div>
+<div style="padding:8pt">
+<fieldset>
+    <legend>ライブ配信監視サービス</legend>
+    <script>
+        requestStart('yc2mc/status?no=${no}', (res) => {
+            let bOK = res.responseText === 'running' ? true : false;
+            let div_nolive = document.getElementById('nolive');
+            let div_live = document.getElementById('live');
+            div_nolive.setAttribute('style', bOK ? 'display:none' : 'display:block');
+            div_live.setAttribute('style', !bOK ? 'display:none' : 'display:block');
+        })
+    </script>
+    <div id="nolive" style="display:none">
+        <button id="yc2mc-start" onClick="requestStart('yc2mc/start?no=${no}')">起動</button>
+    </div>
+    <div id="live">
+        <a href="${live}" target="_new">ライブ配信管理ページ</a><br/>
+        <span onclick="{
+            let e = document.getElementById('old_live_ui');
+            let bOpen = e.style.getPropertyValue('display') == 'block';
+            e.style.setProperty('display', bOpen?'none':'block');
+            this.innerHTML = bOpen ? ' ▶ ' : ' ▼ ';
+        }"> ▶ </span><br/>
+        <div id=old_live_ui style="padding: 8pt; display:none">
+            <!--
+            　<button id="restart1" onClick="requestStart('yc2mc/restart');">再起動</button> … 配信監視サービスを再起動する<br/>
+            　<a href="yc2mc/status" target="newTab">状態確認</a> … 配信転送サービスの起動状況を確認します<br/>
+            -->
+            ライブ配信管理ページでエラーが発生する場合、ここから再起動してください。<br/>
+            <form style="margin:8pt; padding:8pt; border:2px dotted gray; background-color: #f8f8f8;">
+                <label>ライブID指定：<input type="text" name="live_id" value="" size="16" autocomplete="off" placeholder="省略可能です">
+                <button id="restart1" onclick="requestStart('yc2mc/restart?no=${no}&live_id=' + encodeURIComponent(this.form.live_id.value));">再起動</button>
+                <font size="1" color="silver"><br>https://www.youtube.com/watch?v=&lt;ライブID&gt;</font></label>
+            </form>
+        </div>
+    </div>
+</fieldset>
+</div>
+<div style="padding:8pt">
+<fieldset>
+    <legend>統合版フレンドサービス</legend>
+    <span onclick="{
+        let e = document.getElementById('xbox_ui');
+        let bOpen = e.style.getPropertyValue('display') == 'block';
+        e.style.setProperty('display', bOpen?'none':'block');
+        this.innerHTML = bOpen ? ' ▶ ' : ' ▼ ';
+    }"> ▶ </span><br/>
+    <div id=xbox_ui style="padding: 8pt; display:none">
+        統合版のフレンドタブにA-B-C-Dサーバーが見えない場合、ここから再起動してください。<br/>
+        <form style="margin:8pt; padding:8pt; border:2px dotted gray; background-color: #f8f8f8;">
+      　    <button id="restart2" onClick="requestStart('xbox');">再起動</button> … 統合版フレンドサービスを再起動する<br/>
+        </form>
+    </div>
+</fieldset>
+</div>
+</body>
+</html>

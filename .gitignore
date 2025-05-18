@@ -1,0 +1,19 @@
+# node_modulesや依存ファイル
+node_modules/
+*.log
+yarn.lock
+package-lock.json
+
+# ビルド成果物
+dist/
+
+# エディタ固有
+.vscode/
+
+# テストデータや一時ファイル
+docker/proxy
+docker/lobby
+docker/server-1
+
+# Docker関連
+*.env

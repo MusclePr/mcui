@@ -1,0 +1,96 @@
+services:
+  # プロキシーサーバー
+  mc-proxy:
+    container_name: mc-proxy
+    image: itzg/mc-proxy
+    ports:
+      - 25565:25565
+    environment:
+      TYPE: "VELOCITY"
+      MINECRAFT_VERSION: "1.21.5"
+      MODRINTH_PROJECTS: "viaversion,viabackwards"
+      PLUGINS: |
+        https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
+        https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
+      SETUP_ONLY: "${SETUP_ONLY:-false}"
+    volumes:
+      - "./proxy/config:/config:ro" # /config/velocity.toml が新しければ /server/velocity.toml に上書きされる
+      - "./proxy/data:/server"
+
+  # ロビーサーバー
+  mc-lobby:
+    container_name: mc-lobby
+    extends:
+      file: mc-common.yml
+      service: mc
+    environment:
+      SERVER_NAME: "lobby"
+      MOTD: "Lobby"
+      ALLOW_NETHER: "false"
+      MODE: "creative"
+      LEVEL: "lobby"
+      LEVEL_TYPE: "minecraft:flat"
+      WORLD: "/original/lobby.zip"
+      MODRINTH_PROJECTS: "advanced-portals"
+      SPIGET_RESOURCES: "6245,23243"
+    volumes:
+      - "./lobby/data:/data"
+      - "./lobby.zip:/original/lobby.zip:ro"
+
+  # プライベートサーバー
+  mc-server-1:
+    container_name: mc-server-1
+    extends:
+      file: mc-common.yml
+      service: mc
+    environment:
+      SERVER_NAME: "server-1"
+      MOTD: "Server 1"
+      MODE: "survival"
+      PLUGINS: |
+        https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/build/libs/ProtocolLib.jar
+        https://a-b-c-d.com/downloads/NickAfkPartyPack.jar
+    volumes:
+      - "./server-1/data:/data"
+
+  # チケットサービス
+  ticket:
+    container_name: ticket
+    image: MusclePr/ticket:latest
+    volumes:
+      - ./lobby/data:/data:ro
+    environment:
+      SETUP_ONLY: "${SETUP_ONLY:-false}"
+    depends_on:
+      - mc-lobby
+
+  yc2mc:
+    container_name: yc2mc-server-1
+    image: MusclePr/yc2mc:latest
+    ports:
+     - 8081:8080
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./server-1/data:/data:ro"
+      - "./server-1/live:/config"
+    tty: true
+    stdin_open: true
+    environment:
+      # OS
+      TZ: "Asia/Tokyo"
+      # YC2MC
+      CHANNEL_URL: "${CHANNEL_URL:-https://youtube.com/@MusclePr}"
+      MC_YOUTUBE_NAME_COLOR: "blue"
+      RCON_HOST: "mc-server-1"
+      RCON_PASSWORD: "${RCON_PASSWORD:-AdminPassword}"
+      RCON_PORT: 25575
+      TICKET_SERVER: "ticket:8000"
+      SETUP_ONLY: "${SETUP_ONLY:-false}"
+    depends_on:
+      - mc-server-1
+      - ticket
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+
