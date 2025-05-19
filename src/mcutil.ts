@@ -1,7 +1,6 @@
 import { Temporal } from "@js-temporal/polyfill"
 import { NBT, TagType } from "prismarine-nbt"
 import Axios from "axios"
-import e from "express"
 
 export namespace McUtil {
 

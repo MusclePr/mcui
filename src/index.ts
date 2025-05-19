@@ -24,7 +24,7 @@ const MCUI_PASSWORD: string = process.env.MCUI_PASSWORD || "39.da#sd-09/jXa"
 // Minecraft サーバーのルートディレクトリ
 const DATA_PATH: string = '/data'
 // Minecraft サーバーへの Rcon 設定情報
-const RCON_CONTAINER: string = process.env.RCON_CONTAINER || ''
+const RCON_HOST: string = process.env.RCON_HOST || process.env.RCON_CONTAINER || ''
 const CRLF: string = "\n"
 
 // ====================================================================
@@ -88,7 +88,7 @@ function getUnauthorizedResponse() {
   return '認証エラー'
 }
 app.set('trust proxy', true)
-app.use(basicAuth({ authorizer: myAuthorizer, unauthorizedResponse: getUnauthorizedResponse, challenge: true, realm: RCON_CONTAINER + '/' + MCUI_USERNAME }))
+app.use(basicAuth({ authorizer: myAuthorizer, unauthorizedResponse: getUnauthorizedResponse, challenge: true, realm: RCON_HOST + '/' + MCUI_USERNAME }))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(express.static(__dirname + '/assets'))
@@ -154,7 +154,7 @@ app.get('/logout', (req : express.Request, res: express.Response) => {
 // 現在の playerlist(JSON) を得る
 app.get('/playerlist', (req : express.Request, res : express.Response)=> {
   const dir: string = DATA_PATH
-  McUtil.LoadPlayerList(dir, RCON_CONTAINER).then(playerlist => {
+  McUtil.LoadPlayerList(dir, RCON_HOST).then(playerlist => {
     res.json(playerlist)
     console.log(playerlist)
     res.end()
@@ -169,7 +169,7 @@ app.get('/rcon', (req : express.Request, res : express.Response)=> {
       console.log("Illegal command.")
       res.send('Illegal command.')
     } else {
-      McUtil.SendRconCommand(RCON_CONTAINER, command).then(result => {
+      McUtil.SendRconCommand(RCON_HOST, command).then(result => {
         console.log(result)
         res.send(result)
       })
@@ -181,7 +181,7 @@ app.get('/rcon', (req : express.Request, res : express.Response)=> {
 })
 
 app.get('/flush', (req : express.Request, res : express.Response)=> {
-  McUtil.SaveAll(RCON_CONTAINER).then(result => {
+  McUtil.SaveAll(RCON_HOST).then(result => {
     console.log(result)
     res.send(result)
   })
@@ -191,12 +191,12 @@ app.get('/flush', (req : express.Request, res : express.Response)=> {
 app.get('/whitelist/:flag', (req : express.Request, res : express.Response)=> {
   console.log(req.params)
   if (req.params.flag === 'off') {
-    McUtil.SendRconCommand(RCON_CONTAINER, 'whitelist off').then((result) => {
+    McUtil.SendRconCommand(RCON_HOST, 'whitelist off').then((result) => {
       console.log(result)
       res.send(result)
     })
   } else if (req.params.flag === 'on') {
-    McUtil.SendRconCommand(RCON_CONTAINER, 'whitelist on').then((result) => {
+    McUtil.SendRconCommand(RCON_HOST, 'whitelist on').then((result) => {
       console.log(result)
       res.send(result)
     })
@@ -255,7 +255,7 @@ app.get('/yc2mc/:flag', (req : express.Request, res : express.Response)=> {
 // サービスの制御
 app.get('/service/:flag', (req : express.Request, res : express.Response)=> {
   console.log('service の GET リクエストを受け取りました')
-  const container = RCON_CONTAINER
+  const container = RCON_HOST
   if (req.params.flag.match('start|stop|restart')) {
     const command: string = 'docker container ' + req.params.flag + ' ' + container
     McUtil.ExecCommand(command).then((result: string) => {
@@ -304,7 +304,7 @@ app.get('/status', (req : express.Request, res : express.Response)=> {
   const dir: string = DATA_PATH
   console.log('status の GET リクエストに対し、レスポンスを返します。')
   McUtil.loadProperties(dir).then(serverProperty => {
-    McUtil.GetDockerContainerHealth(RCON_CONTAINER).then(status => {
+    McUtil.GetDockerContainerHealth(RCON_HOST).then(status => {
       status = status.replace(/\r?\n/g,"")
       console.log('status: "' + status + '"')
       if (status.match('^(unknown|unhealthy|created|dead|exited|paused|removing|starting|running)')) {
@@ -330,7 +330,7 @@ app.get('/status', (req : express.Request, res : express.Response)=> {
         res.send(output)
         return
       }
-      McUtil.LoadPlayerList(dir, RCON_CONTAINER).then(playerlist => {
+      McUtil.LoadPlayerList(dir, RCON_HOST).then(playerlist => {
         McUtil.LoadPermission(dir).then(perms => {
           const presorted = playerlist.sort((a: McUtil.Player, b: McUtil.Player)=>{ return a.lastPlayed > b.lastPlayed ? -1 : 1 })
           const sorted = presorted.sort((a: McUtil.Player, b: McUtil.Player)=>{ return (a.online ? 1 : 0) > (b.online ? 1 : 0) ? -1 : 1 })
