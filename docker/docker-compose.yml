@@ -10,8 +10,8 @@ services:
       MINECRAFT_VERSION: "1.21.5"
       MODRINTH_PROJECTS: "viaversion,viabackwards"
       PLUGINS: |
-        https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
-        https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
+        https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/velocity
+        https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/velocity
       SETUP_ONLY: "${SETUP_ONLY:-false}"
     volumes:
       - "./proxy/config:/config:ro" # /config/velocity.toml が新しければ /server/velocity.toml に上書きされる
