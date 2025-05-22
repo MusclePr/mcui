@@ -135,16 +135,8 @@ function requestStart(uri, funcResponse)
             this.innerHTML = bOpen ? ' ▶ ' : ' ▼ ';
         }"> ▶ </span><br/>
         <div id=old_live_ui style="padding: 8pt; display:none">
-            <!--
-            　<button id="restart1" onClick="requestStart('yc2mc/restart');">再起動</button> … 配信監視サービスを再起動する<br/>
-            　<a href="yc2mc/status" target="newTab">状態確認</a> … 配信転送サービスの起動状況を確認します<br/>
-            -->
             ライブ配信管理ページでエラーが発生する場合、ここから再起動してください。<br/>
-            <form style="margin:8pt; padding:8pt; border:2px dotted gray; background-color: #f8f8f8;">
-                <label>ライブID指定：<input type="text" name="live_id" value="" size="16" autocomplete="off" placeholder="省略可能です">
-                <button id="restart1" onclick="requestStart('yc2mc/restart?no=${no}&live_id=' + encodeURIComponent(this.form.live_id.value));">再起動</button>
-                <font size="1" color="silver"><br>https://www.youtube.com/watch?v=&lt;ライブID&gt;</font></label>
-            </form>
+            <button id="restart1" onclick="requestStart('yc2mc/restart');">再起動</button>
         </div>
     </div>
 </fieldset>

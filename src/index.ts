@@ -26,6 +26,8 @@ const DATA_PATH: string = '/data'
 // Minecraft サーバーへの Rcon 設定情報
 const RCON_HOST: string = process.env.RCON_HOST || process.env.RCON_CONTAINER || ''
 const CRLF: string = "\n"
+// YC2MC サーバーのコンテナ名
+const YC2MC_CONTAINER: string = process.env.YC2MC_CONTAINER || ''
 
 // ====================================================================
 // ヘルパー関数定義
@@ -48,7 +50,6 @@ var doEnd : boolean = false; // true=Live接続解除
 // ====================================================================
 
 var login_user : string = ''
-var login_user_no : number = 0
 var live_url : string = ''
 
 // express 設定を行う
@@ -56,31 +57,10 @@ function myAuthorizer(username: string, password: string) : boolean
 {
   if (basicAuth.safeCompare(username, MCUI_USERNAME) && basicAuth.safeCompare(password, MCUI_PASSWORD)) {
     login_user = username
-    login_user_no = 0
     live_url = process.env.YC2MC_URL || 'live/'
     return true
   }
-  // 複数のユーザー名とパスワードの許可
-  for (let i: number = 1; true; i++) {
-    let name_key: string = "MCUI_USERNAME_" + i
-    let pass_key: string = "MCUI_PASSWORD_" + i
-    if (name_key in process.env && pass_key in process.env) {
-      let name: string | undefined = process.env[name_key]
-      if (name == undefined) return false
-      let pass: string | undefined = process.env[pass_key]
-      if (pass == undefined) return false
-      if (basicAuth.safeCompare(username, name) && basicAuth.safeCompare(password, pass)) {
-        login_user = username
-        login_user_no = i
-        live_url = process.env["YC2MC_URL_" + i] || 'live-' + login_user + '/'
-        return true
-      }
-    } else {
-      break
-    }
-  }
   login_user = ''
-  login_user_no = 0
   live_url = ''
   return false
 }
@@ -93,19 +73,15 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(express.static(__dirname + '/assets'))
 
-function getYC2MCContainer(no: string) : string
+async function getYC2MCStatus() : Promise<string>
 {
-  const key: string = (no == '' || no == '0') ? 'YC2MC_CONTAINER' : 'YC2MC_CONTAINER_' + no
-  const container: string = process.env[key] != undefined && process.env[key] || ''
-  return container
-}
-
-async function getYC2MCStatus(no: string) : Promise<string>
-{
-  const container: string = getYC2MCContainer(no)
   let status: string = 'unknown'
+  if (YC2MC_CONTAINER.length == 0) {
+    return status
+  }
+  // YC2MC サーバーの状態を取得する
   try {
-    status = await McUtil.GetDockerContainerStatus(container)
+    status = await McUtil.GetDockerContainerStatus(YC2MC_CONTAINER)
     status = status.trimEnd()
   } catch (e) {
     console.log(e)
@@ -113,9 +89,9 @@ async function getYC2MCStatus(no: string) : Promise<string>
   return status
 }
 
-async function getYC2MCHealth(no: string) : Promise<boolean>
+async function getYC2MCHealth() : Promise<boolean>
 {
-  const status: string = await getYC2MCStatus(no)
+  const status: string = await getYC2MCStatus()
   switch (status) {
     case "running":
       return true
@@ -132,11 +108,10 @@ async function getYC2MCHealth(no: string) : Promise<boolean>
 
 async function updateHTML() : Promise<string>
 {
-  const no: string = login_user_no.toString()
   let div_live = ''
-  if (! await getYC2MCHealth(no)) {
+  if (! await getYC2MCHealth()) {
     div_live = '\
-      <button id="yc2mc-restart" onclick="requestStart(\'yc2mc/restart?no=' + no + '\');">起動</button>\
+      <button id="yc2mc-restart" onclick="requestStart(\'yc2mc/restart\');">起動</button>\
       </div><div style="display: none;">\
     '
   }
@@ -218,21 +193,11 @@ app.get('/whitelist/:flag', (req : express.Request, res : express.Response)=> {
 // yc2mc サービスの制御
 app.get('/yc2mc/:flag', (req : express.Request, res : express.Response)=> {
   console.log(req.params)
-  const no: string = req.query && req.query.no != undefined && typeof(req.query.no) === 'string' && req.query.no.trim() || ''
-  const live_id: string = req.query && req.query.live_id != undefined && typeof(req.query.live_id) === 'string' && req.query.live_id.trim() || ''
-  const container = getYC2MCContainer(no)
+  const container = YC2MC_CONTAINER
   if (container.length == 0) {
     console.log("unkonwn container")
     res.send("unknown container")
     return
-  }
-  // ライブID指定あり
-  if (live_id.length > 0) {
-    const command: string = 'docker container exec ' + container + ' sh -c "echo LIVE_ID=' + live_id + '> /var/tmp/.env"'
-    McUtil.ExecCommand(command).then((result: string) => {
-      console.log(result)
-      //res.send(result)
-    })
   }
 
   // 起動・停止・再起動
@@ -293,7 +258,6 @@ app.get('/', (req : express.Request, res : express.Response)=> {
   const buffer : Buffer = fs.readFileSync(__dirname + '/assets/top.html')
   let text = buffer.toString()
   text = text.replaceAll('${live}', live_url)
-  text = text.replaceAll('${no}', login_user_no.toString())
   text = text.replaceAll('${user}', login_user)
   res.send(text)
   res.end()
