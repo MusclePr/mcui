@@ -10,16 +10,17 @@ ENV LANG=ja_JP.UTF-8
 ENV LC_ALL=ja_JP.UTF-8
 WORKDIR /app
 
-COPY dist/index.js .
-COPY dist/mcutil.js .
-COPY assets assets
-COPY package.json yarn.lock ./
+COPY --chown=node:node dist/index.js .
+COPY --chown=node:node dist/mcutil.js .
+COPY --chown=node:node assets assets
+COPY --chown=node:node package.json yarn.lock ./
 RUN yarn install --production
 RUN yarn cache clean
 RUN rm -f package.json yarn.lock
 
-COPY docker/assets/entrypoint.sh .
+COPY --chown=node:node docker/assets/entrypoint.sh .
 RUN chmod +x ./entrypoint.sh
+RUN chown -R node:node /app/node_modules
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["node", "index"]
