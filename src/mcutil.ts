@@ -1,6 +1,7 @@
 import { Temporal } from "@js-temporal/polyfill"
 import { NBT, TagType } from "prismarine-nbt"
 import Axios from "axios"
+import { existsSync } from "fs"
 
 export namespace McUtil {
 
@@ -546,8 +547,16 @@ export async function loadPlayers(dir: string)
 
 export async function loadNicknames(dir: string) : Promise<INicknames>
 {
-    const file: string = dir + '/plugins/NickAfkPartyPack/nicknames.yml'
-    let data: INicknames = { players: {}}
+    let file: string = dir + '/plugins/NicknameRequired/nicknames.yml'
+    let data: INicknames = { players: {} }
+    // 存在チェック
+    if (!existsSync(file)) {
+        console.log("%s が存在しません。", file)
+        file = dir + '/plugins/NickAfkPartyPack/nicknames.yml'
+        if (!existsSync(file)) {
+            return data
+        }
+    }
     try {
         const buffer = await fs.readFile(file, 'utf8')
         const nicknames: INicknames = await yaml.load(buffer)
@@ -555,7 +564,13 @@ export async function loadNicknames(dir: string) : Promise<INicknames>
         console.log(data)
     } catch (err) {
         console.log("%s の読み込みに失敗。", file)
-        //console.log(err)
+    }
+    if (!data) {
+        console.log("%s のデータが空です。", file)
+        data = { players: {} }
+    } else if (!data.players) {
+        console.log("%s のプレイヤー情報の欠落。", file)
+        data.players = {}
     }
     return data
 }

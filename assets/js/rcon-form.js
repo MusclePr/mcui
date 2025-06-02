@@ -188,11 +188,11 @@ function setting(e, event)
         }
         break;
     case 'label':
-        g_elemCmd.value = 'setothernick ' + player.name + ' ' + player.label;
+        g_elemCmd.value = 'nickset ' + player.name + ' ' + player.label;
         g_message = label + ' さんのニックネームを設定しますか？';
         break;
     case 'last':
-        g_elemCmd.value = 'delothernick ' + player.name;
+        g_elemCmd.value = 'nickset ' + player.name;
         g_message = label + ' さんのニックネームを削除しますか？';
         break;
     case 'perms':
