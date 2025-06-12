@@ -243,8 +243,12 @@ export async function LoadPermission(dir: string) : Promise<Perms>
         //console.log(text);
         const data: ILuckPerms = await JSON.parse(text)
         perms = new Perms(data)
-    } catch (err) {
-        console.log(err)
+    } catch (err: any) {
+        if (err.code === 'ENOENT') {
+            console.log(`権限ファイルが見つかりません: ${file}`)
+        } else {
+            console.log(`権限ファイルの読み込みに失敗: ${err.message}`)
+        }
         perms = new Perms()
     }
     return perms
@@ -368,13 +372,17 @@ interface mcid {
     name: string
 }
 
-export async function getUUIDfromName(name: string)
+export async function getUUIDfromName(name: string): Promise<string>
 {
     const url = 'https://api.mojang.com/users/profiles/minecraft/';
-    Axios.get<mcid>(url + name).then((res) => {
-      return res.data.id
-    });
-    return ""
+    try {
+        const res = await Axios.get<mcid>(url + name);
+        return res.data.id;
+    } catch (error) {
+        // 403エラーやその他のエラーをキャッチ
+        console.warn(`Failed to get UUID for ${name}:`, error);
+        return ""; // 空文字を返してエラーで止まらないようにする
+    }
 }
 
 export async function getOnlinePlayers(container: string)
