@@ -69,6 +69,7 @@ export interface IPlayer {
     flag:     number;
     nickname: string;
     player:   string;
+    playername?: string;
 }
 
 // ====================================================================
@@ -675,6 +676,7 @@ export async function LoadPlayerList(dir: string, container: string) : Promise<P
         }
     }
     // 見つからなかったホワイトリストだけ、未ログインの事前登録メンバーとして追加
+    const whitelistStart: number = playerlist.length
     for (let i: number = 0; i < whitelist.length; i++) {
         const key: string = whitelist[i].name.replace(/^\./, "__bedrock__")
         const yamlLabel: string = (nicknames.players && nicknames.players[key]) ? nicknames.players[key].nickname : ''
@@ -689,21 +691,19 @@ export async function LoadPlayerList(dir: string, container: string) : Promise<P
             let p = nicknames.players[key]
             if (p) {
                 //console.log('p: ', p)
-                const name: string = p.player.replace(/^__bedrock__/, ".")
+                const rawPlayer: string = (p.player || p.playername || key)
+                const name: string = rawPlayer.replace(/^__bedrock__/, ".")
                 const data: Player = { uuid: '00000000-0000-0000-0000-000000000000', name: name, order: playerlist.length, label: p.nickname, comment: '', firstPlayed: MakeBigInt([0, 0]), lastPlayed: MakeBigInt([0, 0]), white: false, ban: false, online: false }
-                if (name[0] === '.') {
-                    // BEは、UUIDが解らないので、追加のみ
-                    playerlist.push(data)
-                } else {
-                    // JavaはUUIDを取得できるのでUUIDを取得し、既に一致するものがあれば、置き換える
-                    const uuid: string = await getUUIDfromName(name)
-                    console.log('uuid: \"' + uuid + "\"")
-                    let idx: number = getIndexOf(playerlist, uuid)
-                    if (idx >= 0) {
-                        playerlist[idx].label = p.nickname
-                    } else {
-                        playerlist.push(data)
+                let merged: boolean = false
+                for (let i: number = whitelistStart; i < playerlist.length; i++) {
+                    if (playerlist[i].name === name) {
+                        playerlist[i].label = p.nickname
+                        merged = true
+                        break
                     }
+                }
+                if (!merged) {
+                    playerlist.push(data)
                 }
             }
         }
