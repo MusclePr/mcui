@@ -194,6 +194,7 @@ app.get('/whitelist/:flag', (req : express.Request, res : express.Response)=> {
 app.get('/yc2mc/:flag', (req : express.Request, res : express.Response)=> {
   console.log(req.params)
   const container = YC2MC_CONTAINER
+  const flag = Array.isArray(req.params.flag) ? req.params.flag[0] : req.params.flag
   if (container.length == 0) {
     console.log("unkonwn container")
     res.send("unknown container")
@@ -201,8 +202,8 @@ app.get('/yc2mc/:flag', (req : express.Request, res : express.Response)=> {
   }
 
   // 起動・停止・再起動
-  if (req.params.flag.match('start|stop|restart') ) {
-    const command: string = 'docker container ' + req.params.flag + ' ' + container
+  if (/^(start|stop|restart)$/.test(flag)) {
+    const command: string = 'docker container ' + flag + ' ' + container
     McUtil.ExecCommand(command).then((result: string) => {
       console.log(result)
       res.send(result)
@@ -221,14 +222,15 @@ app.get('/yc2mc/:flag', (req : express.Request, res : express.Response)=> {
 app.get('/service/:flag', (req : express.Request, res : express.Response)=> {
   console.log('service の GET リクエストを受け取りました')
   const container = RCON_HOST
-  if (req.params.flag.match('start|stop|restart')) {
-    const command: string = 'docker container ' + req.params.flag + ' ' + container
+  const flag = Array.isArray(req.params.flag) ? req.params.flag[0] : req.params.flag
+  if (/^(start|stop|restart)$/.test(flag)) {
+    const command: string = 'docker container ' + flag + ' ' + container
     McUtil.ExecCommand(command).then((result: string) => {
       console.log(result)
       res.send(result)
       // mcui で停止した場合、/data/.stop-from-mcui ファイルが作成される。
       const dir: string = DATA_PATH
-      const command_care: string = (req.params.flag.match('stop') ? 'touch ' : 'rm -f ') + dir + '/.stop-from-mcui'
+      const command_care: string = (flag === 'stop' ? 'touch ' : 'rm -f ') + dir + '/.stop-from-mcui'
       console.log(command_care)
       McUtil.ExecCommand(command_care).then((result: string) => {
         console.log(result)

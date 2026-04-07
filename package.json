@@ -7,16 +7,16 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@js-temporal/polyfill": "^0.5.1",
-    "axios": "^1.9.0",
-    "express": "^5.1.0",
+    "axios": "^1.14.0",
+    "express": "^5.2.1",
     "express-basic-auth": "^1.2.1",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.1.1",
     "minecraft-server-properties": "^1.0.0",
-    "prismarine-nbt": "^2.7.0",
+    "prismarine-nbt": "^2.8.0",
     "rcon-client": "^4.2.5"
   },
   "devDependencies": {
-    "@types/express": "^5.0.2",
+    "@types/express": "^5.0.6",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.19"
   },
