@@ -1,8 +1,8 @@
 FROM node:lts-alpine
 RUN apk -U --no-cache add tzdata musl-locales bash su-exec
 RUN apk -U --no-cache add docker-cli
-# dockerグループ(GID:999)として、nodeユーザーを追加 (alpineのGID:999は、pingグループ)
-RUN adduser node ping
+# node ユーザーを作成（GID割り当てはentrypoint.shで動的に対応）
+#RUN adduser -D -u 1000 node
 ARG DEBUG
 ENV DEBUG=${DEBUG:-""}
 ENV TZ=Asia/Tokyo

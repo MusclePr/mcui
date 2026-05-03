@@ -40,6 +40,15 @@ function checkTools()
     if [ $? -ne 0 ]; then
         echo "yq is not installed. Please install yq."
         echo "https://github.com/mikefarah/yq/"
+        echo "sudo snap install yq"
+        exit 1
+    fi
+
+    # unzip のインストール確認
+    unzip -v > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "unzip is not installed. Please install unzip."
+        echo "sudo apt install unzip"
         exit 1
     fi
 }

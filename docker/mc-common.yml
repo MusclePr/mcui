@@ -8,7 +8,7 @@ services:
       EULA: "true"
       TYPE: "PAPER"
       #PAPER_CHANNEL: "experimental"
-      VERSION: "1.21.11"
+      VERSION: "26.1.2"
       # RCON
       ENABLE_RCON: "true"
       RCON_PASSWORD: "${RCON_PASSWORD:-AdminPassword}"

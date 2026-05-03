@@ -537,7 +537,9 @@ export async function loadPlayers(dir: string)
 {
     const output = await loadProperties(dir)
     const world : string = output['level-name']
-    const dirPlayers : string = dir + '/' + world + '/playerdata'
+    const dirPlayersNew : string = dir + '/' + world + '/players/data'
+    const dirPlayersLegacy : string = dir + '/' + world + '/playerdata'
+    const dirPlayers : string = existsSync(dirPlayersNew) ? dirPlayersNew : dirPlayersLegacy
     let files = await fs.readdir(dirPlayers)
     files = files.filter((item : string) => (item.match(/_old$/)) == null)
     files.forEach((f : string, i : number) => { files[i] = dirPlayers + '/' + f; })
