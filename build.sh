@@ -1,3 +1,3 @@
 #!/bin/sh
-tsc
 
+./dev/build.sh
