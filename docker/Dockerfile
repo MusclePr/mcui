@@ -13,10 +13,10 @@ WORKDIR /app
 COPY --chown=node:node dist/index.js .
 COPY --chown=node:node dist/mcutil.js .
 COPY --chown=node:node assets assets
-COPY --chown=node:node package.json yarn.lock ./
-RUN yarn install --production
-RUN yarn cache clean
-RUN rm -f package.json yarn.lock
+COPY --chown=node:node package.json package-lock.json ./
+RUN npm ci --omit=dev
+RUN npm cache clean --force
+RUN rm -f package.json package-lock.json
 
 COPY --chown=node:node docker/assets/entrypoint.sh .
 RUN chmod +x ./entrypoint.sh

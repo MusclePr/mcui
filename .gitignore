@@ -1,8 +1,6 @@
 # node_modulesや依存ファイル
 node_modules/
 *.log
-yarn.lock
-package-lock.json
 
 # ビルド成果物
 dist/
