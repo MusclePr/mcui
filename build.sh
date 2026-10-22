@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-REQUIRED_NODE_MAJOR=25
+REQUIRED_NODE_MAJOR=26
 
 if [ -f .nvmrc ]; then
 	NVM_DIR=${NVM_DIR:-"$HOME/.nvm"}
@@ -28,8 +28,8 @@ fi
 
 NODE_MAJOR=$(node -p "process.versions.node.split('.')[0]")
 if [ "${NODE_MAJOR}" != "${REQUIRED_NODE_MAJOR}" ]; then
-	echo "Node.js v${REQUIRED_NODE_MAJOR} が必要です。'nvm use' で切り替えてください。"
-	echo "現在の Node.js: v$(node -v)"
+	echo "Node.js ${REQUIRED_NODE_MAJOR} が必要です。'nvm use' で切り替えてください。"
+	echo "現在の Node.js: $(node -v)"
 	exit 1
 fi
 
