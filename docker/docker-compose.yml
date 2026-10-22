@@ -74,7 +74,7 @@ services:
   # 配信支援サービス
   mc-server1-live:
     container_name: mc-${SERVER1}-live
-    image: MusclePr/yc2mc:latest
+    image: ghcr.io/musclepr/yc2mc:latest
     ports:
      - 8081:8080
     volumes:
@@ -102,7 +102,7 @@ services:
   
   mc-server1-ui:
     container_name: mc-${SERVER1}-ui
-    image: MusclePr/mcui
+    image: ghcr.io/musclepr/mcui:latest
     ports:
       - 8080:8080
     volumes:
